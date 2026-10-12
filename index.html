@@ -15,7 +15,63 @@
 </head>
 <body>
 
+  <!-- CHAT_RELAY_URL -->
+
   <!-- Tidio chat widget -->
   <script src="//code.tidio.co/rik5uyqs0pekpabrnp50pi3v6nk8mnpa.js" async></script>
+
+  <script>
+  (function () {
+    var relayUrl = window.CHAT_RELAY_URL;
+    if (!relayUrl) return;
+
+    // Stable visitor ID persisted in localStorage
+    function getVisitorId() {
+      try {
+        var id = localStorage.getItem('mb_chat_vid');
+        if (!id) {
+          id = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+          localStorage.setItem('mb_chat_vid', id);
+        }
+        return id;
+      } catch (e) {
+        return 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+      }
+    }
+
+    var visitorId = getVisitorId();
+
+    function postEvent(actor, message) {
+      if (!message || !message.trim()) return;
+      fetch(relayUrl + '/chat-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visitorId: visitorId,
+          actor: actor,
+          message: message.trim(),
+          timestamp: new Date().toISOString()
+        })
+      }).catch(function () {}); // silent fail — never break the chat
+    }
+
+    function registerListeners() {
+      if (!window.tidioChatApi) return;
+      window.tidioChatApi.on('messageFromVisitorSend', function (data) {
+        postEvent('visitor', data.message);
+      });
+      window.tidioChatApi.on('messageReceived', function (data) {
+        postEvent('bot', data.message);
+      });
+    }
+
+    if (window.tidioChatApi) {
+      registerListeners();
+    } else {
+      document.addEventListener('tidioChat-ready', registerListeners);
+    }
+  })();
+  </script>
+
 </body>
 </html>
