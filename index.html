@@ -57,10 +57,10 @@
 
     function registerListeners() {
       if (!window.tidioChatApi) return;
-      window.tidioChatApi.on('messageFromVisitorSend', function (data) {
+      window.tidioChatApi.on('messageFromVisitor', function (data) {
         postEvent('visitor', data.message);
       });
-      window.tidioChatApi.on('messageReceived', function (data) {
+      window.tidioChatApi.on('messageFromOperator', function (data) {
         postEvent('bot', data.message);
       });
     }
